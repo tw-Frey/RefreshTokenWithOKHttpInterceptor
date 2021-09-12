@@ -1,13 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<layout><data>
+    <variable
+        name="viewmodel"
+        type="tw.idv.fy.okhttp.interceptor.refreshtoken.MainViewModel" />
+</data><LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FCC"
     tools:context=".MainActivity" >
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycle_view"
-        android:background="#FCC"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-</FrameLayout>
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Refresh"
+        android:onClick="@{viewmodel::refreshButtonOnClick}"
+        tools:ignore="HardcodedText" />
+</LinearLayout></layout>

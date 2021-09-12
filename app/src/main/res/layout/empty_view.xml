@@ -10,5 +10,5 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
-    android:text="無資料"
+    android:text="載入中..."
     tools:ignore="HardcodedText" />

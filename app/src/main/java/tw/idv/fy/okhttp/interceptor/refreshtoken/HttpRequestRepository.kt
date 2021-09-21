@@ -51,34 +51,34 @@ class HttpRequestRepository(
             //.addHeader("serialNo", serialNo.toString())
             //.addHeader("insert_time", Date().time.toString().takeLast(7))
             .build()
-        //ioCoroutineScope.launch {
-        //    obtainOkHttpClient.newCall(request)
-        //        .runCatching {
-        //            (execute().body?.string() ?: "{}")
-        //                /*.apply {
-        //                    android.util.Log.d("Faty", "(流水編號 $serialNo) $this")
-        //                }*/.run {
-        //                    jsonAdapter.fromJson(this)?.dateTime ?: HttpResponse.DEFAULT
-        //                }.let {
-        //                    trySend(serialNo to "${it}0000000".take(27))
-        //                }
-        //        }
-        //        .onFailure {
-        //            android.util.Log.w("Faty", it)
-        //        }
-        //}
-        obtainOkHttpClient.newCall(request).enqueue {
-            onResponse { _, response ->
-                (response.body?.string() ?: "{}")
-                    /*.apply {
-                        android.util.Log.d("Faty", "(流水編號 $serialNo) $this")
-                    }*/.run {
-                        jsonAdapter.fromJson(this)?.dateTime ?: HttpResponse.DEFAULT
-                    }.let {
-                        trySend(serialNo to "${it}0000000".take(27))
-                    }
-            }
+        ioCoroutineScope.launch {
+            obtainOkHttpClient.newCall(request)
+                .runCatching {
+                    (execute().body?.string() ?: "{}")
+                        /*.apply {
+                            android.util.Log.d("Faty", "(流水編號 $serialNo) $this")
+                        }*/.run {
+                            jsonAdapter.fromJson(this)?.dateTime ?: HttpResponse.DEFAULT
+                        }.let {
+                            trySend(serialNo to "${it}0000000".take(27))
+                        }
+                }
+                .onFailure {
+                    android.util.Log.w("Faty", it)
+                }
         }
+        //obtainOkHttpClient.newCall(request).enqueue {
+        //    onResponse { _, response ->
+        //        (response.body?.string() ?: "{}")
+        //            /*.apply {
+        //                android.util.Log.d("Faty", "(流水編號 $serialNo) $this")
+        //            }*/.run {
+        //                jsonAdapter.fromJson(this)?.dateTime ?: HttpResponse.DEFAULT
+        //            }.let {
+        //                trySend(serialNo to "${it}0000000".take(27))
+        //            }
+        //    }
+        //}
         awaitClose()
     }
 }

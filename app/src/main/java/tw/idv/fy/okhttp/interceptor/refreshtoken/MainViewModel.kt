@@ -38,7 +38,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val httpRequestRepository = HttpRequestRepository(viewModelScope)
         repeat(COUNT) {
             viewModelScope.launch {
-                httpRequestRepository.httpRequest(it * 100).collect {
+                httpRequestRepository.httpRequest().collect {
                     (this@httpRequestAll as MutableLiveData<Pair<Int, String>>).value = it
                 }
             }

@@ -1,20 +1,18 @@
+@file:Suppress("unused")
+
 package tw.idv.fy.okhttp.interceptor.refreshtoken
 
 import androidx.annotation.CallSuper
 import com.squareup.moshi.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.plus
 import okhttp3.*
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
-@Suppress("unused")
 class HttpRequestRepository(
     private val mainCoroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main),
     private val ioCoroutineScope: CoroutineScope = mainCoroutineScope + Dispatchers.IO
@@ -23,17 +21,38 @@ class HttpRequestRepository(
     private companion object {
         private val jsonAdapter: JsonAdapter<HttpResponse> = Moshi.Builder().add(DateAdapter()).build().adapter(HttpResponse::class.java)
         private var serialNo = 1
+        /**
+         * 因為每次 getter 都 new OkHttpClient, 所以每次 obtainOkHttpClient 都不一樣 (多個 clients)
+         */
+        private val obtainOkHttpClient: OkHttpClient get() = OkHttpClient.Builder()
+            //.addInterceptor {
+            //    with(it) {
+            //        proceed(
+            //            request()
+            //                .newBuilder()
+            //                .addHeader("start_time", Date().time.toString().takeLast(7))
+            //                .build()
+            //        )
+            //    }
+            //}
+            .dispatcher {
+                maxRequests = 1
+                maxRequestsPerHost = 1
+            }
+            .build()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun httpRequest(delayInMillisecond: Int = 5000): Flow<Pair<Int, String>> = callbackFlow {
+    fun httpRequest(delayInMillisecond: Int = 1000): Flow<Pair<Int, String>> = callbackFlow {
         val serialNo = serialNo++
         val request = Request.Builder()
-            //.url("https://deelay.me/$delayInMillisecond/https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei")
-            .url("https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei")
+            .url("https://deelay.me/$delayInMillisecond/https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei")
+            //.url("https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei")
+            //.addHeader("serialNo", serialNo.toString())
+            //.addHeader("insert_time", Date().time.toString().takeLast(7))
             .build()
         //ioCoroutineScope.launch {
-        //    OkHttpClient().newCall(request)
+        //    obtainOkHttpClient.newCall(request)
         //        .runCatching {
         //            (execute().body?.string() ?: "{}")
         //                /*.apply {
@@ -48,7 +67,7 @@ class HttpRequestRepository(
         //            android.util.Log.w("Faty", it)
         //        }
         //}
-        OkHttpClient().newCall(request).enqueue {
+        obtainOkHttpClient.newCall(request).enqueue {
             onResponse { _, response ->
                 (response.body?.string() ?: "{}")
                     /*.apply {
@@ -64,9 +83,9 @@ class HttpRequestRepository(
     }
 }
 
+fun OkHttpClient.Builder.dispatcher(block: Dispatcher.() -> Unit) = dispatcher(Dispatcher().apply(block))
 fun Call.enqueue(block: OkHttpCallback.() -> Unit) = enqueue(OkHttpCallback().apply(block))
 
-@Suppress("unused")
 open class OkHttpCallback : Callback {
 
     private var onResponseBlock: ((call: Call, response: Response) -> Unit)? = null
@@ -98,7 +117,6 @@ data class HttpResponse(val dateTime: String = DEFAULT) {
     }
 }
 
-@Suppress("unused")
 class DateAdapter {
     companion object {
         val DEFAULT = Date(0)

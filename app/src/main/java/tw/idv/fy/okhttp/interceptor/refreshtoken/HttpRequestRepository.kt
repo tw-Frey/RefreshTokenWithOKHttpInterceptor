@@ -22,9 +22,9 @@ class HttpRequestRepository(
         private val jsonAdapter: JsonAdapter<HttpResponse> = Moshi.Builder().add(DateAdapter()).build().adapter(HttpResponse::class.java)
         private var serialNo = 1
         /**
-         * 因為每次 getter 都 new OkHttpClient, 所以每次 obtainOkHttpClient 都不一樣 (多個 clients)
+         * 因為沒有 getter 去 new OkHttpClient, 所以每次 obtainOkHttpClient 都是一樣 (單個 clients)
          */
-        private val obtainOkHttpClient: OkHttpClient get() = OkHttpClient.Builder()
+        private val obtainOkHttpClient: OkHttpClient /*get()*/ = OkHttpClient.Builder()
             //.addInterceptor {
             //    with(it) {
             //        proceed(

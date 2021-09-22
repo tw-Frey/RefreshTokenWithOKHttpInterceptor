@@ -1,16 +1,16 @@
-@file:Suppress("unused")
+@file:Suppress("unused", "SpellCheckingInspection")
 
 package tw.idv.fy.okhttp.interceptor.refreshtoken
 
-import androidx.annotation.CallSuper
-import com.squareup.moshi.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import okhttp3.*
-import java.io.IOException
-import java.text.SimpleDateFormat
+import kotlinx.coroutines.plus
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.util.*
 
 class HttpRequestRepository(
@@ -19,22 +19,25 @@ class HttpRequestRepository(
 ) {
 
     private companion object {
-        private val jsonAdapter: JsonAdapter<HttpResponse> = Moshi.Builder().add(DateAdapter()).build().adapter(HttpResponse::class.java)
-        private var serialNo = 1
+        var serialNo = 1
         /**
          * 因為沒有 getter 去 new OkHttpClient, 所以每次 obtainOkHttpClient 都是一樣 (單個 clients)
          */
         private val obtainOkHttpClient: OkHttpClient /*get()*/ = OkHttpClient.Builder()
-            //.addInterceptor {
-            //    with(it) {
-            //        proceed(
-            //            request()
-            //                .newBuilder()
-            //                .addHeader("start_time", Date().time.toString().takeLast(7))
-            //                .build()
-            //        )
-            //    }
-            //}
+            .addNetworkInterceptor {
+                with(it) {
+                    /*proceed(
+                        request()
+                            .newBuilder()
+                            .addHeader("start_time", Date().toString())
+                            .build()
+                    )*/
+                    proceed(request())
+                        .newBuilder()
+                        .addHeader("token_stamp", DateAdapter.Instance.toJson(Date()))
+                        .build()
+                }
+            }
             .dispatcher {
                 maxRequests = 1
                 maxRequestsPerHost = 1
@@ -46,8 +49,9 @@ class HttpRequestRepository(
     fun httpRequest(delayInMillisecond: Int = 1000): Flow<Pair<Int, String>> = callbackFlow {
         val serialNo = serialNo++
         val request = Request.Builder()
-            .url("https://deelay.me/$delayInMillisecond/https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei")
-            //.url("https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei")
+            //.url("https://deelay.me/$delayInMillisecond/https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei")
+            //.url("https://www.google.com.tw?r=$serialNo." + System.currentTimeMillis())
+            .url("https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei&r=$serialNo." + System.currentTimeMillis())
             //.addHeader("serialNo", serialNo.toString())
             //.addHeader("insert_time", Date().time.toString().takeLast(7))
             .build()
@@ -69,61 +73,26 @@ class HttpRequestRepository(
         //}
         obtainOkHttpClient.newCall(request).enqueue {
             onResponse { _, response ->
-                (response.body?.string() ?: "{}")
+                //(response.body?.string() ?: "{}")
+                //(response.use { it.headers }["date"] ?: "Thu, 01 Jan 1970 00:00:00 GMT")
+                (response.use{ it.headers }["token_stamp"] ?: HttpResponse.DEFAULT)  // 使用 response.use{} 原因係最後會 response.close() 如此才能立即釋放供下一個 request 使用, PS: body() 實質上 有執行 close()
                     /*.apply {
                         android.util.Log.d("Faty", "(流水編號 $serialNo) $this")
                     }*/.run {
-                        jsonAdapter.fromJson(this)?.dateTime ?: HttpResponse.DEFAULT
+                        //jsonAdapter.fromJson(this)?.dateTime ?: HttpResponse.DEFAULT
+                        //DateAdapter.Instance.fromJson(this, DateAdapter.HttpDatePattern) ?: DateAdapter.DEFAULT
+                        this
                     }.let {
-                        trySend(serialNo to "${it}0000000".take(27))
+                        //trySend(serialNo to "${it}000000000".take(29))
+                        //trySend(serialNo to DateAdapter.Instance.toJson(it))
+                        trySend(serialNo to it)
                     }
+                close()
+            }
+            onFailure { _, e ->
+                close(e)
             }
         }
         awaitClose()
     }
-}
-
-fun OkHttpClient.Builder.dispatcher(block: Dispatcher.() -> Unit) = dispatcher(Dispatcher().apply(block))
-fun Call.enqueue(block: OkHttpCallback.() -> Unit) = enqueue(OkHttpCallback().apply(block))
-
-open class OkHttpCallback : Callback {
-
-    private var onResponseBlock: ((call: Call, response: Response) -> Unit)? = null
-    private var onFailureBlock: ((call: Call, e: IOException) -> Unit)? = null
-
-    fun onResponse(block: (call: Call, response: Response) -> Unit) {
-        onResponseBlock = block
-    }
-
-    fun onFailure(block: (call: Call, e: IOException) -> Unit) {
-        onFailureBlock = block
-    }
-
-    @CallSuper
-    override fun onResponse(call: Call, response: Response) {
-        onResponseBlock?.invoke(call, response)
-    }
-
-    @CallSuper
-    override fun onFailure(call: Call, e: IOException) {
-        onFailureBlock?.invoke(call, e)
-    }
-}
-
-@JsonClass(generateAdapter = true)
-data class HttpResponse(val dateTime: String = DEFAULT) {
-    companion object {
-        val DEFAULT = DateAdapter.Instance.toJson(DateAdapter.DEFAULT)
-    }
-}
-
-class DateAdapter {
-    companion object {
-        val DEFAULT = Date(0)
-        val Instance = DateAdapter()
-    }
-    @FromJson
-    fun fromJson(dateTime: String): Date? = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", Locale.TAIWAN).parse(dateTime)
-    @ToJson
-    fun toJson(dateTime: Date): String = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", Locale.TAIWAN).format(dateTime)
 }

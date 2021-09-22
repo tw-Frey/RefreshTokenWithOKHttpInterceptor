@@ -19,10 +19,10 @@ class HttpRequestAdapter(private val resultArray: List<Pair<Int, String>>) : Rec
                     "[%02d] Token = %s+%s",
                     position + 1,
                     (DateAdapter.Instance.fromJson(it.second) ?: DateAdapter.DEFAULT).time,
-                    it.second.takeLast(4)
+                    it.second.takeLast(6)
                 )
                 findViewById<TextView>(android.R.id.text2).text = String.format(
-                    "流水編號 %03d (%s)",
+                    "流水號 %03d (%s)",
                     it.first,
                     it.second
                 )

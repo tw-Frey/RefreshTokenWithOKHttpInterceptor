@@ -20,7 +20,7 @@ class TokenRepository(
     private companion object {
         var SerialNo = 1
         /**
-         * OkHttpClient singleton
+         * OkHttpClient singleton (單個 clients)
          */
         val OkHttpClientSingleton = OkHttpClient
             .Builder()
@@ -36,7 +36,7 @@ class TokenRepository(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun fetchTokenRequest(): Flow<Token> = callbackFlow {
-        val serialNo = SerialNo++
+        val serialNo = "000${SerialNo++}".takeLast(3)
         val request  = with(timeApiRequest) {
             url.newBuilder()
                .addQueryParameter("fetchToken", "$serialNo." + System.currentTimeMillis())
@@ -55,7 +55,7 @@ class TokenRepository(
                     }.run {
                         jsonAdapter.fromJson(this)?.dateTime ?: HttpResponse.DEFAULT
                     }.let { dateTime ->
-                        trySend(Token(serialNo, dateTime))
+                        trySend(Token(serialNo.toInt(), dateTime))
                     }
                 close()
             }

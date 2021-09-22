@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -35,12 +36,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun LiveData<Pair<Int, String>>.httpRequestAll() {
-        val httpRequestRepository = HttpRequestRepository(viewModelScope)
+        //val httpRequestRepository = HttpRequestRepository(viewModelScope)
+        //repeat(COUNT) {
+        //    viewModelScope.launch {
+        //        httpRequestRepository.httpRequest().collect {
+        //            (this@httpRequestAll as MutableLiveData<Pair<Int, String>>).value = it
+        //        }
+        //    }
+        //}
+        val tokenRepository = TokenRepository(viewModelScope)
         repeat(COUNT) {
             viewModelScope.launch {
-                httpRequestRepository.httpRequest().collect {
-                    (this@httpRequestAll as MutableLiveData<Pair<Int, String>>).value = it
-                }
+                tokenRepository.fetchTokenRequest()
+                    .map {
+                        it.serialNo to it.dateTime
+                    }.collect {
+                        (this@httpRequestAll as MutableLiveData<Pair<Int, String>>).value = it
+                    }
             }
         }
     }

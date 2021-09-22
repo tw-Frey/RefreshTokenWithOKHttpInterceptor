@@ -1,4 +1,4 @@
-@file:Suppress("unused", "SpellCheckingInspection")
+@file:Suppress("unused", "SpellCheckingInspection", "LocalVariableName")
 
 package tw.idv.fy.okhttp.interceptor.refreshtoken
 
@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.plus
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.util.*
 
 class TokenRepository(
@@ -18,7 +19,8 @@ class TokenRepository(
 ) {
 
     private companion object {
-        var SerialNo = 1
+        const val SerialNoDefault = 0
+        var SerialNo = SerialNoDefault
         /**
          * OkHttpClient singleton (單個 clients)
          */
@@ -29,6 +31,13 @@ class TokenRepository(
                 maxRequestsPerHost = 1
             }
             .build()
+        /**
+         * Token API request
+         */
+        val timeApiRequest = Request.Builder()
+            //.url("https://deelay.me/1000/https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei")
+            .url("https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei")
+            .build()
     }
 
     var isTokenExpires: Boolean = true
@@ -36,7 +45,7 @@ class TokenRepository(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun fetchTokenRequest(): Flow<Token> = callbackFlow {
-        val serialNo = "000${SerialNo++}".takeLast(3)
+        val serialNo = "000${++SerialNo}".takeLast(3)
         val request  = with(timeApiRequest) {
             url.newBuilder()
                .addQueryParameter("fetchToken", "$serialNo." + System.currentTimeMillis())
@@ -50,12 +59,10 @@ class TokenRepository(
         OkHttpClientSingleton.newCall(request).enqueue {
             onResponse { _, response ->
                 (response.body?.string() ?: "{}")
-                    .apply {
-                        android.util.Log.d("Faty", "fetchTokenRequest = (流水編號 $serialNo) $this")
-                    }.run {
+                    .run {
                         jsonAdapter.fromJson(this)?.dateTime ?: HttpResponse.DEFAULT
                     }.let { dateTime ->
-                        trySend(Token(serialNo.toInt(), dateTime))
+                        trySend(Token(serialNo, dateTime))
                     }
                 close()
             }
@@ -67,12 +74,15 @@ class TokenRepository(
     }
 
     data class Token(
-        val serialNo: Int,
         /**
-         * 應該是 yyyy-MM-ddTHH:mm:ss.SSSSSSS (timeapi.io 的 格式)
+         * 流水號: 3位數, 不足左補零
+         */
+        val serialNo: String,
+        /**
+         * [dateTime] 應該是 yyyy-MM-ddTHH:mm:ss.SSSSSSS (timeapi.io 的 格式)
          */
         val dateTime: String,
         val date: Date = DateAdapter.Instance.fromJson(dateTime) ?: DateAdapter.DEFAULT,
-        val nanoSecond: Int = "${dateTime}000000000".takeLast(9).toInt()
+        val nanoSecond: Int = "${dateTime}000000000".take(29).takeLast(9).toInt()
     )
 }

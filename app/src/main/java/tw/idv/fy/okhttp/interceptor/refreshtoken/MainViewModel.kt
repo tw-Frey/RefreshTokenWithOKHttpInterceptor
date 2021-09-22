@@ -7,17 +7,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import tw.idv.fy.okhttp.interceptor.refreshtoken.TokenRepository.Token
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private companion object {
-        private const val COUNT = 15
+        private const val COUNT = 30
     }
 
-    val resultLiveData: LiveData<Pair<Int, String>> by lazy {
-        MutableLiveData<Pair<Int, String>>().apply { httpRequestAll() }
+    val resultLiveData: LiveData<Pair<String, Token>> by lazy {
+        MutableLiveData<Pair<String, Token>>().apply { httpRequestAll() }
     }
 
     private var refreshButtonOnClickBlock: ((v: View?) -> Unit)? = null
@@ -35,24 +35,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun LiveData<Pair<Int, String>>.httpRequestAll() {
-        //val httpRequestRepository = HttpRequestRepository(viewModelScope)
-        //repeat(COUNT) {
-        //    viewModelScope.launch {
-        //        httpRequestRepository.httpRequest().collect {
-        //            (this@httpRequestAll as MutableLiveData<Pair<Int, String>>).value = it
-        //        }
-        //    }
-        //}
-        val tokenRepository = TokenRepository(viewModelScope)
+    private fun LiveData<Pair<String, Token>>.httpRequestAll() {
+        val httpRequestRepository = HttpRequestRepository(viewModelScope)
         repeat(COUNT) {
             viewModelScope.launch {
-                tokenRepository.fetchTokenRequest()
-                    .map {
-                        it.serialNo to it.dateTime
-                    }.collect {
-                        (this@httpRequestAll as MutableLiveData<Pair<Int, String>>).value = it
-                    }
+                httpRequestRepository.httpRequest().collect {
+                    (this@httpRequestAll as MutableLiveData<Pair<String, Token>>).value = it
+                }
             }
         }
     }

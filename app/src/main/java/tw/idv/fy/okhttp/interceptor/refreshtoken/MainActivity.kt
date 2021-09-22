@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package tw.idv.fy.okhttp.interceptor.refreshtoken
 
 import android.os.Bundle
@@ -6,11 +8,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import tw.idv.fy.okhttp.interceptor.refreshtoken.databinding.ActivityMainBinding
+import tw.idv.fy.okhttp.interceptor.refreshtoken.TokenRepository.Token
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val comparator = Comparator<Pair<Int, String>> { a, b -> a.second.compareTo(b.second) }
+    private val comparator = Comparator<Pair<String, Token>> { a, b ->
+        a.second.dateTime.compareTo(b.second.dateTime)
+    }
     private val mainViewModel by viewModels<MainViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,7 +25,7 @@ class MainActivity : AppCompatActivity() {
                 lifecycleOwner = this@MainActivity
                 viewmodel = mainViewModel
             }.apply {
-                val resultArray = mutableListOf<Pair<Int, String>>()
+                val resultArray = mutableListOf<Pair<String, Token>>()
                 val resultAdapter = HttpRequestAdapter(resultArray)
                 with(recycleView) {
                     addItemDecoration(EmptyItemDecoration())
@@ -30,7 +35,7 @@ class MainActivity : AppCompatActivity() {
                 with(mainViewModel) {
                     resultLiveData.observe(this@MainActivity) {
                         resultArray.add(it)
-                        resultArray.sortWith(comparator)
+                        //resultArray.sortWith(comparator)
                         resultAdapter.notifyDataSetChanged()
                     }
                     refreshButtonOnClick {

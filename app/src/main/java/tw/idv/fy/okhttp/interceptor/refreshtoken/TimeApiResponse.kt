@@ -3,7 +3,6 @@
 package tw.idv.fy.okhttp.interceptor.refreshtoken
 
 import com.squareup.moshi.*
-import okhttp3.Request
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -14,12 +13,6 @@ import java.util.*
  */
 
 val jsonAdapter: JsonAdapter<HttpResponse> = Moshi.Builder().add(DateAdapter()).build().adapter(HttpResponse::class.java)
-
-val timeApiRequest = Request.Builder()
-    //.url("https://deelay.me/1000/https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei")
-    .url("https://www.timeapi.io/api/Time/current/zone?timeZone=Asia/Taipei")
-    .build()
-
 
 @JsonClass(generateAdapter = true)
 data class HttpResponse(val dateTime: String = DEFAULT) {

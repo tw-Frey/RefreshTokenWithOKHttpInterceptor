@@ -4,8 +4,9 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import tw.idv.fy.okhttp.interceptor.refreshtoken.TokenRepository.Token
 
-class HttpRequestAdapter(private val resultArray: List<Pair<Int, String>>) : RecyclerView.Adapter<HttpRequestViewHolder>() {
+class HttpRequestAdapter(private val resultArray: List<Pair<String, Token>>) : RecyclerView.Adapter<HttpRequestViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HttpRequestViewHolder =
         LayoutInflater.from(parent.context)
@@ -16,15 +17,15 @@ class HttpRequestAdapter(private val resultArray: List<Pair<Int, String>>) : Rec
         with(holder.itemView) {
             resultArray[position].let {
                 findViewById<TextView>(android.R.id.text1).text = String.format(
-                    "[%02d] Token = %s+%s",
+                    "[%02d] Token = %s/%09d",
                     position + 1,
-                    (DateAdapter.Instance.fromJson(it.second) ?: DateAdapter.DEFAULT).time,
-                    it.second.takeLast(6)
+                    it.second.date.time,
+                    it.second.nanoSecond
                 )
                 findViewById<TextView>(android.R.id.text2).text = String.format(
-                    "流水號 %03d (%s)",
+                    "併發流水號 %s\n佇列流水號 %s",
                     it.first,
-                    it.second
+                    it.second.serialNo
                 )
             }
         }

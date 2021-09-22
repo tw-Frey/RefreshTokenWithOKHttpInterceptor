@@ -26,3 +26,24 @@ maxRequests = 1<br>maxRequestsPerHost = 1|多個 clients|單個 client
 
 ![/images/單個client異步request.png](/images/單個client異步request.png)
 #### 只有 單個client異步request 有效 ####
+
+---
+
+因為在 [Interceptor](https://square.github.io/okhttp/interceptors) 打 API 會時以 _**同步 (sync)**_ 方式執行  
+但 [Dispatcher](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-dispatcher) 只有 _**同步 (sync)**_ 有效  
+也就是說要寫 異步 實現 同步  
+方法是不少, 例如 Furture 或 Deferred 或 Promise 甚至 Coroutine  
+這個專案是使用 Kotlin Coroutine 的 Flow/callbackFlow 來實現  
+
+結果如下
+
+![/images/image1.png](/images/image1.png)
+![/images/image2.png](/images/image2.png)
+
+上圖裡  
+前八條是併發 ([httpRequest](app/src/main/java/tw/idv/fy/okhttp/interceptor/refreshtoken/HttpRequestRepository.kt#L56))  
+後八條是佇列 ([fetchTokenRequest](app/src/main/java/tw/idv/fy/okhttp/interceptor/refreshtoken/HttpRequestRepository.kt#L56))  
+httpRequest 幾乎同時間發出  
+但受制於 Interceptor 裡的 fetchTokenRequest 由 Dispatcher 發配執行  
+因為 maxRequests 和 maxRequestsPerHost 都設為 1  
+相當於 佇列排隊 一個接一個 執行

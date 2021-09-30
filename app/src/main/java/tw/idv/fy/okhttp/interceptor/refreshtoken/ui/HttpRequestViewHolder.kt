@@ -1,4 +1,4 @@
-package tw.idv.fy.okhttp.interceptor.refreshtoken
+package tw.idv.fy.okhttp.interceptor.refreshtoken.ui
 
 import android.view.View
 import android.widget.TextView

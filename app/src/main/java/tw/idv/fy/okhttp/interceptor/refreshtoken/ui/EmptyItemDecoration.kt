@@ -1,4 +1,4 @@
-package tw.idv.fy.okhttp.interceptor.refreshtoken
+package tw.idv.fy.okhttp.interceptor.refreshtoken.ui
 
 import android.graphics.Canvas
 import android.view.LayoutInflater
@@ -6,6 +6,7 @@ import android.view.View
 import android.view.View.MeasureSpec.EXACTLY
 import android.view.View.MeasureSpec.makeMeasureSpec
 import androidx.recyclerview.widget.RecyclerView
+import tw.idv.fy.okhttp.interceptor.refreshtoken.R
 
 
 class EmptyItemDecoration : RecyclerView.ItemDecoration() {

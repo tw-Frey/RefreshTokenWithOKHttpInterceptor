@@ -1,4 +1,4 @@
-package tw.idv.fy.okhttp.interceptor.refreshtoken
+package tw.idv.fy.okhttp.interceptor.refreshtoken.utils
 
 import androidx.annotation.CallSuper
 import okhttp3.*

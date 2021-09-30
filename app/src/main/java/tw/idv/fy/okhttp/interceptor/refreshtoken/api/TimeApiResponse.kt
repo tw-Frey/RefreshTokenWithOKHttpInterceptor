@@ -1,6 +1,6 @@
 @file:Suppress("unused", "SpellCheckingInspection", "MemberVisibilityCanBePrivate")
 
-package tw.idv.fy.okhttp.interceptor.refreshtoken
+package tw.idv.fy.okhttp.interceptor.refreshtoken.api
 
 import com.squareup.moshi.*
 import java.text.SimpleDateFormat

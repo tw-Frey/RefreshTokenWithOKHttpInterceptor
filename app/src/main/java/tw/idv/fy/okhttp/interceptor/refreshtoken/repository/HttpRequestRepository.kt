@@ -1,6 +1,6 @@
 @file:Suppress("unused", "SpellCheckingInspection", "LocalVariableName")
 
-package tw.idv.fy.okhttp.interceptor.refreshtoken
+package tw.idv.fy.okhttp.interceptor.refreshtoken.repository
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import tw.idv.fy.okhttp.interceptor.refreshtoken.TokenRepository.Token
+import tw.idv.fy.okhttp.interceptor.refreshtoken.api.HttpResponse
+import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.TokenRepository.Token
+import tw.idv.fy.okhttp.interceptor.refreshtoken.utils.enqueue
 
 class HttpRequestRepository(
     private val mainCoroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main),

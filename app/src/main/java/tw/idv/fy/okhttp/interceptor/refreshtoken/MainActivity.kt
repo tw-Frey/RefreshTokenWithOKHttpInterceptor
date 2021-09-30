@@ -8,7 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import tw.idv.fy.okhttp.interceptor.refreshtoken.databinding.ActivityMainBinding
-import tw.idv.fy.okhttp.interceptor.refreshtoken.TokenRepository.Token
+import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.TokenRepository.Token
+import tw.idv.fy.okhttp.interceptor.refreshtoken.ui.EmptyItemDecoration
+import tw.idv.fy.okhttp.interceptor.refreshtoken.ui.HttpRequestAdapter
+import tw.idv.fy.okhttp.interceptor.refreshtoken.viewmodel.MainViewModel
 import java.util.*
 
 class MainActivity : AppCompatActivity() {

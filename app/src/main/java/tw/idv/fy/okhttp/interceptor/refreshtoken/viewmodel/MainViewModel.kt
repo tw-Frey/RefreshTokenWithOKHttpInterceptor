@@ -1,4 +1,4 @@
-package tw.idv.fy.okhttp.interceptor.refreshtoken
+package tw.idv.fy.okhttp.interceptor.refreshtoken.viewmodel
 
 import android.app.Application
 import android.view.View
@@ -8,7 +8,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import tw.idv.fy.okhttp.interceptor.refreshtoken.TokenRepository.Token
+import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.HttpRequestRepository
+import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.TokenRepository.Token
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 

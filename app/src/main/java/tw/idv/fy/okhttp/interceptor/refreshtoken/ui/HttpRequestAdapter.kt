@@ -1,10 +1,10 @@
-package tw.idv.fy.okhttp.interceptor.refreshtoken
+package tw.idv.fy.okhttp.interceptor.refreshtoken.ui
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import tw.idv.fy.okhttp.interceptor.refreshtoken.TokenRepository.Token
+import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.TokenRepository.Token
 
 class HttpRequestAdapter(private val resultArray: List<Pair<String, Token>>) : RecyclerView.Adapter<HttpRequestViewHolder>() {
 

@@ -2,7 +2,7 @@
 <layout><data>
     <variable
         name="viewmodel"
-        type="tw.idv.fy.okhttp.interceptor.refreshtoken.MainViewModel" />
+        type="tw.idv.fy.okhttp.interceptor.refreshtoken.viewmodel.MainViewModel" />
 </data><LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"

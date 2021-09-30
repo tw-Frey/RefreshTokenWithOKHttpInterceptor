@@ -12,7 +12,8 @@ import java.util.*
  * 為了精準性, 儲存時 保留 dateTime 原始時間字串
  */
 
-val jsonAdapter: JsonAdapter<HttpResponse> = Moshi.Builder().add(DateAdapter()).build().adapter(HttpResponse::class.java)
+val timeApiMoshi: Moshi = Moshi.Builder().add(DateAdapter()).build()
+val jsonAdapter: JsonAdapter<HttpResponse> = timeApiMoshi.adapter(HttpResponse::class.java)
 
 @JsonClass(generateAdapter = true)
 data class HttpResponse(val dateTime: String = DEFAULT) {

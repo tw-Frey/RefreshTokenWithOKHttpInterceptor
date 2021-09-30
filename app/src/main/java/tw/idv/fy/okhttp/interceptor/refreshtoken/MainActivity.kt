@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import tw.idv.fy.okhttp.interceptor.refreshtoken.databinding.ActivityMainBinding
+import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.HttpRequestRepository.ResponseObject
 import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.TokenRepository.Token
 import tw.idv.fy.okhttp.interceptor.refreshtoken.ui.EmptyItemDecoration
 import tw.idv.fy.okhttp.interceptor.refreshtoken.ui.HttpRequestAdapter
@@ -16,7 +17,10 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val comparator = Comparator<Pair<String, Token>> { a, b ->
+    /**
+     * 以 Token 的 server dateTime 做為比較基準
+     */
+    private val comparator = Comparator<Pair<ResponseObject, Token>> { a, b ->
         a.second.dateTime.compareTo(b.second.dateTime)
     }
     private val mainViewModel by viewModels<MainViewModel>()
@@ -28,7 +32,7 @@ class MainActivity : AppCompatActivity() {
                 lifecycleOwner = this@MainActivity
                 viewmodel = mainViewModel
             }.apply {
-                val resultArray = mutableListOf<Pair<String, Token>>()
+                val resultArray = mutableListOf<Pair<ResponseObject, Token>>()
                 val resultAdapter = HttpRequestAdapter(resultArray)
                 with(recycleView) {
                     addItemDecoration(EmptyItemDecoration())

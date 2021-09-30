@@ -9,16 +9,17 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.HttpRequestRepository
+import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.HttpRequestRepository.ResponseObject
 import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.TokenRepository.Token
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private companion object {
-        private const val COUNT = 30
+        private const val COUNT = 8
     }
 
-    val resultLiveData: LiveData<Pair<String, Token>> by lazy {
-        MutableLiveData<Pair<String, Token>>().apply { httpRequestAll() }
+    val resultLiveData: LiveData<Pair<ResponseObject, Token>> by lazy {
+        MutableLiveData<Pair<ResponseObject, Token>>().apply { httpRequestAll() }
     }
 
     private var refreshButtonOnClickBlock: ((v: View?) -> Unit)? = null
@@ -36,12 +37,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun LiveData<Pair<String, Token>>.httpRequestAll() {
+    private fun LiveData<Pair<ResponseObject, Token>>.httpRequestAll() {
         val httpRequestRepository = HttpRequestRepository(viewModelScope)
         repeat(COUNT) {
             viewModelScope.launch {
                 httpRequestRepository.httpRequest().collect {
-                    (this@httpRequestAll as MutableLiveData<Pair<String, Token>>).value = it
+                    (this@httpRequestAll as MutableLiveData<Pair<ResponseObject, Token>>).value = it
                 }
             }
         }

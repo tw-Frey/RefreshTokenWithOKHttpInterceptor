@@ -8,11 +8,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import tw.idv.fy.okhttp.interceptor.refreshtoken.api.HttpResponse
 import tw.idv.fy.okhttp.interceptor.refreshtoken.api.TimeApiService.Companion.SerialNoDefault
 import tw.idv.fy.okhttp.interceptor.refreshtoken.api.gainTimeApiService
-import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.TokenRepository.Token
+import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.TokenRepository.*
 import tw.idv.fy.okhttp.interceptor.refreshtoken.utils.enqueue
+import tw.idv.fy.okhttp.interceptor.refreshtoken.utils.toCancellationException
 
 class HttpRequestRepository(
     private val mainCoroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main),
@@ -24,24 +28,32 @@ class HttpRequestRepository(
      * 因為有 getter 去 new OkHttpClient, 所以每次 obtainOkHttpClient 都不一樣 (多個 clients)
      */
     private val obtainOkHttpClient: OkHttpClient /**/get() = OkHttpClient.Builder()
-        .addNetworkInterceptor {
+        .addInterceptor {
             val token: Token = runBlocking(ioCoroutineScope.coroutineContext) {
                 tokenRepository
                     .fetchTokenRequest()
                     .first()
             }
             with(it) {
-                //proceed(
-                //    request()
-                //        .newBuilder()
-                //        .addHeader("start_time", Date().toString())
-                //        .build()
-                //)
-                proceed(request())
-                    .newBuilder()
-                    .addHeader("token_serialNo", token.serialNo)
-                    .addHeader("token_dateTime", token.dateTime)
-                    .build()
+                when (token) {
+                    is ErrorToken -> {
+                        val msg = token.e.run { localizedMessage ?: message ?: javaClass.simpleName }
+                        Response.Builder()
+                            .request(request())
+                            .protocol(Protocol.HTTP_2)
+                            .code(600)
+                            .message(msg)
+                            .body(msg.toResponseBody())
+                            .build()
+                    }
+                    else -> {
+                        proceed(request())
+                            .newBuilder()
+                            .addHeader("token_serialNo", token.serialNo)
+                            .addHeader("token_dateTime", token.dateTime)
+                            .build()
+                    }
+                }
             }
         }
         .build()
@@ -63,7 +75,7 @@ class HttpRequestRepository(
                             dateTime = httpResponse.dateTime
                         )
                         val token = response.raw().headers.run {
-                            Token(
+                            ValidToken(
                                 serialNo = this["token_serialNo"] ?: SerialNoDefault,
                                 dateTime = this["token_dateTime"] ?: HttpResponse.DEFAULT
                             )
@@ -74,7 +86,7 @@ class HttpRequestRepository(
                 }
             }
             onFailure { _, e ->
-                close(e)
+                close(e.toCancellationException())
             }
         }
         awaitClose()

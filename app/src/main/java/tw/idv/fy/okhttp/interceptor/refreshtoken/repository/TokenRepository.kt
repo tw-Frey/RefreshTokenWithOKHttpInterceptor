@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.plus
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import tw.idv.fy.okhttp.interceptor.refreshtoken.api.HttpResponse
 import tw.idv.fy.okhttp.interceptor.refreshtoken.api.TimeApiService.Companion.SerialNoDefault
 import tw.idv.fy.okhttp.interceptor.refreshtoken.api.gainTimeApiService
@@ -22,6 +25,14 @@ class TokenRepository(
 ) {
 
     private companion object {
+        var count = -1
+        val isTokenExpires: Boolean
+            get() = bodyStringCache == null || run {
+                count += 1
+                count %= 3
+                count >= 2
+            }
+        var bodyStringCache: String? = null
         /**
          * OkHttpClient singleton (單個 clients)
          */
@@ -29,12 +40,29 @@ class TokenRepository(
             .Builder()
             .addInterceptor { chain ->
                 val request = chain.request()
-                android.util.Log.i("Faty", "addInterceptor: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
-                chain.proceed(request)
+                //android.util.Log.i("Faty", "addInterceptor: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
+                val (code, message, bodyString) = when {
+                    isTokenExpires || bodyStringCache == null -> {
+                        chain.proceed(request).run {
+                            Triple(code, message, body?.string())
+                        }
+                    }
+                    else -> Triple(200, "", bodyStringCache)
+                }
+                if (code in 200..299) {
+                    bodyStringCache = bodyString
+                }
+                Response.Builder()
+                    .protocol(Protocol.HTTP_2)
+                    .request(request)
+                    .code(code)
+                    .message(message)
+                    .body(bodyString?.takeIf { code in 200..299 }?.toResponseBody())
+                    .build()
             }
             .addNetworkInterceptor { chain ->
                 val request = chain.request()
-                android.util.Log.w("Faty", "addNetworkInterceptor: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
+                //android.util.Log.w("Faty", "addNetworkInterceptor: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
                 chain.proceed(request)
             }
             .dispatcher {
@@ -47,7 +75,7 @@ class TokenRepository(
     @OptIn(ExperimentalCoroutinesApi::class)
     fun fetchTokenRequest(): Flow<Token> = callbackFlow {
         val call = gainTimeApiService(OkHttpClientSingleton).getToken()
-        android.util.Log.i("Faty", "fetchTokenRequest: r1=${call.request().url.queryParameter("r1")}=&r2=${call.request().url.queryParameter("r2")}")
+        //android.util.Log.i("Faty", "fetchTokenRequest: r1=${call.request().url.queryParameter("r1")}=&r2=${call.request().url.queryParameter("r2")}")
         call.enqueue {
             onResponse { call, response ->
                 if (!response.isSuccessful) {

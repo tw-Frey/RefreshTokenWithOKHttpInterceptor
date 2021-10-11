@@ -29,8 +29,8 @@ class HttpRequestRepository(
      */
     private val obtainOkHttpClient: OkHttpClient /**/get() = OkHttpClient.Builder()
         .addInterceptor {
-            val request = it.request()
-            android.util.Log.v("Faty", "addNetworkInterceptor: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
+            //val request = it.request()
+            //android.util.Log.v("Faty", "addNetworkInterceptor: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
             val token: Token = runBlocking(ioCoroutineScope.coroutineContext) {
                 tokenRepository
                     .fetchTokenRequest()
@@ -60,7 +60,7 @@ class HttpRequestRepository(
         }
         .addNetworkInterceptor { chain ->
             val request = chain.request()
-            android.util.Log.d("Faty", "addNetworkInterceptor: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
+            //android.util.Log.d("Faty", "addNetworkInterceptor: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
             chain.proceed(request)
         }
         .build()
@@ -68,7 +68,7 @@ class HttpRequestRepository(
     @OptIn(ExperimentalCoroutinesApi::class)
     fun httpRequest(): Flow<Pair<ResponseObject, Token>> = callbackFlow {
         val call = gainTimeApiService(obtainOkHttpClient).getData()
-        android.util.Log.v("Faty", "fetchTokenRequest: r1=${call.request().url.queryParameter("r1")}=&r2=${call.request().url.queryParameter("r2")}")
+        //android.util.Log.v("Faty", "fetchTokenRequest: r1=${call.request().url.queryParameter("r1")}=&r2=${call.request().url.queryParameter("r2")}")
         call.enqueue {
             onResponse { call, response ->
                 if (!response.isSuccessful) {

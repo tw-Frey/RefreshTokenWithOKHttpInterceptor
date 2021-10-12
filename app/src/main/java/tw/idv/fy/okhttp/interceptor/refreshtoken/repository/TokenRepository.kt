@@ -2,22 +2,19 @@
 
 package tw.idv.fy.okhttp.interceptor.refreshtoken.repository
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.plus
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
-import tw.idv.fy.okhttp.interceptor.refreshtoken.api.HttpResponse
+import tw.idv.fy.okhttp.interceptor.refreshtoken.api.*
 import tw.idv.fy.okhttp.interceptor.refreshtoken.api.TimeApiService.Companion.SerialNoDefault
-import tw.idv.fy.okhttp.interceptor.refreshtoken.api.gainTimeApiService
 import tw.idv.fy.okhttp.interceptor.refreshtoken.utils.dispatcher
 import tw.idv.fy.okhttp.interceptor.refreshtoken.utils.enqueue
+import java.util.*
 
 class TokenRepository(
     private val mainCoroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main),
@@ -25,12 +22,10 @@ class TokenRepository(
 ) {
 
     private companion object {
-        var count = -1
+        var tokenTime: Date = Date(System.currentTimeMillis())
         val isTokenExpires: Boolean
             get() = bodyStringCache == null || run {
-                count += 1
-                count %= 3
-                count >= 2
+                System.currentTimeMillis() - tokenTime.time > 100
             }
         var bodyStringCache: String? = null
         /**
@@ -51,6 +46,14 @@ class TokenRepository(
                 }
                 if (code in 200..299) {
                     bodyStringCache = bodyString
+                    tokenTime = bodyString?.run {
+                        jsonAdapter.fromJson(this)?.dateTime?.run {
+                            DateAdapter.Instance.fromJson(this)
+                        }
+                    } ?: tokenTime
+                }
+                runBlocking(Dispatchers.IO) {
+                    delay(50L)
                 }
                 Response.Builder()
                     .protocol(Protocol.HTTP_2)

@@ -17,7 +17,7 @@ import tw.idv.fy.okhttp.interceptor.refreshtoken.repository.TokenRepository.Toke
 class MainViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private companion object {
-        private const val COUNT = 10
+        private const val COUNT = 30
     }
 
     val resultLiveData: LiveData<Pair<ResponseObject, Token>> by lazy {

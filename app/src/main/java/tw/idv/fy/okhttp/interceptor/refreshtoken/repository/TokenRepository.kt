@@ -116,7 +116,7 @@ class TokenRepository(
          * [dateTime] 應該是 yyyy-MM-ddTHH:mm:ss.SSSSSSS (timeapi.io 的 格式)
          */
         dateTime: String,
-    ) : TemplateData(serialNo, dateTime)
+    ) : DataTime(serialNo, dateTime)
 
     class ValidToken internal constructor(
         /**

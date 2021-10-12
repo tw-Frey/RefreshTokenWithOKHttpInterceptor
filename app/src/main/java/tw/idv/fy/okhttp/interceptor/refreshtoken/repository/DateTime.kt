@@ -3,7 +3,7 @@ package tw.idv.fy.okhttp.interceptor.refreshtoken.repository
 import tw.idv.fy.okhttp.interceptor.refreshtoken.api.DateAdapter
 import java.util.*
 
-sealed class TemplateData(
+sealed class DataTime(
     /**
      * 流水號: 3位數, 不足左補零
      */

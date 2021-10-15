@@ -33,17 +33,37 @@ class TokenRepository(
          */
         val OkHttpClientSingleton = OkHttpClient
             .Builder()
+            .addInterceptor {
+                if (Math.random() > 0.5) {
+                    android.util.Log.i("Faty", "addInterceptor first pass(通過)")
+                    return@addInterceptor it.proceed(it.request())
+                }
+                android.util.Log.i("Faty", "addInterceptor first short(短路)")
+                val bodyString = "{\"year\":2021,\"month\":10,\"day\":15,\"hour\":17,\"minute\":44,\"seconds\":24,\"milliSeconds\":773,\"dateTime\":\"2021-10-15T17:44:24.7736797\",\"date\":\"10/15/2021\",\"time\":\"17:44\",\"timeZone\":\"Asia/Taipei\",\"dayOfWeek\":\"Friday\",\"dstActive\":false}"
+                Response.Builder()
+                    .protocol(Protocol.HTTP_2)
+                    .request(it.request())
+                    .code(200)
+                    .message("message")
+                    .body(bodyString.toResponseBody())
+                    .build()
+            }
             .addInterceptor { chain ->
                 val request = chain.request()
-                //android.util.Log.i("Faty", "addInterceptor: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
+                android.util.Log.i("Faty", "addInterceptor second: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
                 val (code, message, bodyString) = when {
                     isTokenExpires || bodyStringCache == null -> {
+                        android.util.Log.d("Faty", "addInterceptor second pass(通過)")
                         chain.proceed(request).run {
                             Triple(code, message, body?.string())
                         }
                     }
-                    else -> Triple(200, "", bodyStringCache)
+                    else -> {
+                        android.util.Log.d("Faty", "addInterceptor second short(短路)")
+                        Triple(200, "", bodyStringCache)
+                    }
                 }
+                android.util.Log.e("Faty", "bodyString = $bodyString")
                 if (code in 200..299) {
                     bodyStringCache = bodyString
                     tokenTime = bodyString?.run {
@@ -65,7 +85,7 @@ class TokenRepository(
             }
             .addNetworkInterceptor { chain ->
                 val request = chain.request()
-                //android.util.Log.w("Faty", "addNetworkInterceptor: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
+                android.util.Log.w("Faty", "addNetworkInterceptor: r1=${request.url.queryParameter("r1")}=&r2=${request.url.queryParameter("r2")}")
                 chain.proceed(request)
             }
             .dispatcher {
@@ -78,7 +98,7 @@ class TokenRepository(
     @OptIn(ExperimentalCoroutinesApi::class)
     fun fetchTokenRequest(): Flow<Token> = callbackFlow {
         val call = gainTimeApiService(OkHttpClientSingleton).getToken()
-        //android.util.Log.i("Faty", "fetchTokenRequest: r1=${call.request().url.queryParameter("r1")}=&r2=${call.request().url.queryParameter("r2")}")
+        android.util.Log.v("Faty", "fetchTokenRequest: r1=${call.request().url.queryParameter("r1")}=&r2=${call.request().url.queryParameter("r2")}")
         call.enqueue {
             onResponse { call, response ->
                 if (!response.isSuccessful) {

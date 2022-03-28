@@ -3,17 +3,19 @@
 package tw.idv.fy.okhttp.interceptor.refreshtoken.repository
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
-import tw.idv.fy.okhttp.interceptor.refreshtoken.api.*
+import tw.idv.fy.okhttp.interceptor.refreshtoken.api.DateAdapter
+import tw.idv.fy.okhttp.interceptor.refreshtoken.api.HttpResponse
 import tw.idv.fy.okhttp.interceptor.refreshtoken.api.TimeApiService.Companion.SerialNoDefault
+import tw.idv.fy.okhttp.interceptor.refreshtoken.api.TimeApiService.Companion.serialNoForGetToken
+import tw.idv.fy.okhttp.interceptor.refreshtoken.api.gainTimeApiService
+import tw.idv.fy.okhttp.interceptor.refreshtoken.api.jsonAdapter
 import tw.idv.fy.okhttp.interceptor.refreshtoken.utils.dispatcher
-import tw.idv.fy.okhttp.interceptor.refreshtoken.utils.enqueue
 import java.util.*
 
 class TokenRepository(
@@ -95,36 +97,19 @@ class TokenRepository(
             .build()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun fetchTokenRequest(): Flow<Token> = callbackFlow {
-        val call = gainTimeApiService(OkHttpClientSingleton).getToken()
-        android.util.Log.v("Faty", "fetchTokenRequest: r1=${call.request().url.queryParameter("r1")}=&r2=${call.request().url.queryParameter("r2")}")
-        call.enqueue {
-            onResponse { call, response ->
-                if (!response.isSuccessful) {
-                    trySend(IOErrorToken)
-                    close(IOErrorToken.e)
-                    return@onResponse
-                }
-                when (val httpResponse = response.body()) {
-                    null -> {
-                        trySend(IOErrorToken)
-                        close(IOErrorToken.e)
-                    }
-                    else -> {
-                        val serialNo = call.request().url.queryParameter("r1") ?: SerialNoDefault
-                        val dateTime = httpResponse.dateTime
-                        trySend(ValidToken(serialNo, dateTime))
-                        close()
-                    }
-                }
-            }
-            onFailure { _, e ->
-                trySend(IOErrorToken)
-                close(e)
-            }
+    /**
+     * TODO(沒有Exception處理)
+     */
+    fun fetchTokenRequest(): Flow<Token> = flow {
+        val serialNo: String = "000${++serialNoForGetToken}".takeLast(3)
+        val currentTimeMillis = System.currentTimeMillis()
+        gainTimeApiService(OkHttpClientSingleton).getToken(
+            serialNo = serialNo,
+            currentTimeMillis = currentTimeMillis
+        ).apply {
+            android.util.Log.v("Faty", "fetchTokenRequest: r1=$serialNo=&r2=$currentTimeMillis")
+            emit(ValidToken(serialNo, dateTime))
         }
-        awaitClose()
     }
 
     sealed class Token (

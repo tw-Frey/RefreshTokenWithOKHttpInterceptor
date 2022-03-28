@@ -14,17 +14,17 @@ interface TimeApiService {
     companion object {
         const val SerialNoDefault = "000"
         private var serialNoForGetData : Int = SerialNoDefault.toInt()
-        private var serialNoForGetToken: Int = SerialNoDefault.toInt()
+        internal var serialNoForGetToken: Int = SerialNoDefault.toInt()
     }
 
     @GET("zone")
-    fun getToken(
+    suspend fun getToken(
         @Header("User-Agent") http_agent: String? = System.getProperty("http.agent"),
         @Query("timeZone", encoded = true) timeZone: String = "Asia/Taipei",
         @Query("api", encoded = true) api: String = "TimeApiService/getToken",
-        @Query("r1") serialNo: String = "000${++serialNoForGetToken}".takeLast(3),
-        @Query("r2") currentTimeMillis: Long = System.currentTimeMillis()
-    ) : Call<HttpResponse>
+        @Query("r1") serialNo: String, // 必填
+        @Query("r2") currentTimeMillis: Long // 必填
+    ) : HttpResponse
 
     @GET("coordinate")
     fun getData(
